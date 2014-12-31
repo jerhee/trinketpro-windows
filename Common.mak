@@ -56,7 +56,7 @@ $(TARGETNAME).elf: $(OBJ) $(LIBS)
 	@echo.
 	@echo Linking $@
 	$(CC) $(LDFLAGS) $(OPT) -o $@ $(OBJ) $(LIBS)
-    @echo Size of executable:
+	@echo Size of executable:
 	@$(SIZE) -B -d $(TARGETNAME).elf 
 
 $(TARGETNAME).a: $(OBJ)
@@ -84,7 +84,7 @@ upload: upload_serial
 
 .PHONY: upload_serial
 upload_serial: $(TARGETNAME).hex
-    upload-serial.cmd $(TARGETNAME).hex
+	upload-serial.cmd $(TARGETNAME).hex
 
 # Unplug and replug the board before programming via USB. Beware of USB hubs.
 .PHONY: upload_usb
