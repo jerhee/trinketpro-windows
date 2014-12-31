@@ -477,6 +477,8 @@ ISR(TWI_vect)
     case TW_SR_GCALL_DATA_NACK: // data received generally, returned nack
       // nack back at master
       twi_reply(0);
+      // ack future responses and leave slave receiver state
+      twi_releaseBus();
       break;
     
     // Slave Transmitter

@@ -62,12 +62,13 @@ void receiveEvent(int count)
 
     // write remaining bytes to storage at address
     int c;
+    unsigned int tempAddr = address;
     while ((c = Wire.read()) != -1)
     {
-        if (address < sizeof(storage))
+        if (tempAddr < sizeof(storage))
         {
-            storage[address] = uint8_t(c);
-            ++address;
+            storage[tempAddr] = uint8_t(c);
+            ++tempAddr;
         }
     }
 }
