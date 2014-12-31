@@ -1,6 +1,6 @@
 @echo off
+set PATH=%~dp0\bin\x86\;%~dp0\bin;%PATH%
 if "%PROCESSOR_ARCHITECTURE%" == "AMD64" set PATH=%~dp0\bin\amd64;%PATH%
-set PATH=%~dp0\bin\x86\;%PATH%
 
 set ARDUINO_DIR=%programfiles%\Arduino
 if exist "%ARDUINO_DIR%" goto found

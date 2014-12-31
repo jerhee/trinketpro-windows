@@ -3,3 +3,4 @@
 *.hex
 *.elf
 *.bin
+_comport.txt

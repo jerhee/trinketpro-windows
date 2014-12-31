@@ -81,10 +81,10 @@ $(TARGETNAME).a: $(OBJ)
 	$(CC) -c $(ASFLAGS) $(OPT) $< -o $@
 
 upload: upload_serial
-	
+
 .PHONY: upload_serial
 upload_serial: $(TARGETNAME).hex
-	avrdude.exe -C /Arduino/hardware/tools/avr/etc/avrdude.conf -c arduino -p atmega328p -U flash:w:$(TARGETNAME).hex -P COM4
+    upload-serial.cmd $(TARGETNAME).hex
 
 # Unplug and replug the board before programming via USB. Beware of USB hubs.
 .PHONY: upload_usb
@@ -93,4 +93,4 @@ upload_usb: $(TARGETNAME).hex
     
 .PHONY: clean	
 clean:
-	del /q *.o *.a *.lst *.elf *.bin *.hex
+	del /q *.o *.a *.lst *.elf *.bin *.hex _comport.txt
