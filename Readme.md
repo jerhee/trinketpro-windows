@@ -40,8 +40,10 @@ way around since Arduino lets you write malformed C++ code.
     
 ###Uploading over USB (without FTDI cable)
 
-1. Plug a micro-USB cable into the trinket
-2. nmake upload_usb
+ 1. Install [Trinket Pro USB drivers](https://learn.adafruit.com/introducing-pro-trinket/downloads).
+    Unzip the file, then right click on USBTiny.inf and click Install.
+ 1. Plug a micro-USB cable into the trinket
+ 1. nmake upload_usb
 
 I have found that USB upload is flaky and only works ~10% of the time,
 so I recommend using serial if possible. You can increase
