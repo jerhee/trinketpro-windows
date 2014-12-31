@@ -5,4 +5,4 @@ CPPSRC=eeprom.cpp
 
 LIBS= \
     ../libarduinocore/libarduinocore.a \
-    ../libwire/libwire.a \
+    ../libarduinowire/libarduinowire.a \

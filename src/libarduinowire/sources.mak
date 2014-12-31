@@ -1,4 +1,4 @@
-TARGETNAME=libwire
+TARGETNAME=libarduinowire
 TARGETTYPE=library
 
 CSRC= \
