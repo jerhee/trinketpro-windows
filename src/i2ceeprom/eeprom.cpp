@@ -35,16 +35,19 @@ unsigned int address = 0;
 // this function is registered as an event, see setup()
 void requestEvent()
 {
+    digitalWrite(13, HIGH);
     Serial.println("request");
     // fill buffer
     Wire.write(&storage[address], min(sizeof(storage) - address, BUFFER_LENGTH));
     address = 0;
+    digitalWrite(13, LOW);
 }
 
 // function that executes whenever data is received from master
 // this function is registered as an event, see setup()
 void receiveEvent(int count)
 {
+    digitalWrite(13, HIGH);
     Serial.println("receive");
     // first two bytes are slave address {HI LO}
     // ignore all other bytes
@@ -71,6 +74,7 @@ void receiveEvent(int count)
             ++tempAddr;
         }
     }
+    digitalWrite(13, LOW);
 }
 
 
@@ -102,9 +106,5 @@ void loop()
     //  Wire.write(0xaa);
     //  Wire.write(0xbb);
     //  Wire.endTransmission();
-
-    digitalWrite(13, HIGH);
-    delay(500);
-    digitalWrite(13, LOW);
-    delay(500);
+    delay(1000);
 }
