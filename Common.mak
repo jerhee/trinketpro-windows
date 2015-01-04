@@ -15,7 +15,7 @@ CFLAGS= \
 	-ffunction-sections \
 	-fdata-sections \
 	-fno-exceptions \
-	
+
 CPPFLAGS=$(CFLAGS)
 ASFLAGS=$(CFLAGS)
 LDFLAGS= -mmcu=$(MCU)
@@ -28,9 +28,6 @@ CINCS= \
 	-I/Arduino/hardware/arduino/avr/libraries/Wire/utility \
 	-I/Arduino/hardware/arduino/avr/libraries/SPI \
 
-# include the project specific definitions
-!include sources.mak
-	
 PFX = avr
 CC = $(PFX)-gcc
 CPP = $(PFX)-g++
@@ -39,6 +36,9 @@ OBJCOPY = $(PFX)-objcopy
 OBJDUMP = $(PFX)-objdump
 SIZE = $(PFX)-size
 NM = $(PFX)-nm
+
+# include the project specific definitions
+!include sources.mak
 
 OBJ = $(CSRC:.c=.o) $(ASRC:.S=.o) $(CPPSRC:.cpp=.o)
 
@@ -50,18 +50,18 @@ CPPFLAGS=$(CPPFLAGS) -Werror
 TARGET=$(TARGETNAME).a
 !endif
 
-all: $(TARGET) 
+all: $(TARGET)
 
 $(TARGETNAME).elf: $(OBJ) $(LIBS)
 	@echo.
 	@echo Linking $@
 	$(CC) $(LDFLAGS) $(OPT) -o $@ $(OBJ) $(LIBS)
 	@echo Size of executable:
-	@$(SIZE) -B -d $(TARGETNAME).elf 
+	@$(SIZE) -B -d $(TARGETNAME).elf
 
 $(TARGETNAME).a: $(OBJ)
 	$(AR) r $@ $?
-	
+
 .elf.hex:
 	@echo.
 	@echo Creating HEX
@@ -71,7 +71,7 @@ $(TARGETNAME).a: $(OBJ)
 	@echo.
 	@echo Compiling $<
 	$(CC) -c $(CFLAGS) $(OPT) $(CINCS) $<
-	
+
 .cpp.o:
 	@echo.
 	@echo Compiling $<
@@ -90,7 +90,7 @@ upload_serial: $(TARGETNAME).hex
 .PHONY: upload_usb
 upload_usb: $(TARGETNAME).hex
 	avrdude.exe -C /Arduino/hardware/tools/avr/etc/avrdude.conf -c usbtiny -p atmega328p -U flash:w:$(TARGETNAME).hex
-	
-.PHONY: clean	
+
+.PHONY: clean
 clean:
-	del /q *.o *.a *.lst *.elf *.bin *.hex _comport.txt
+	del /q *.o *.a *.lst *.elf *.bin *.hex _comport.txt $(CLEANFILES)

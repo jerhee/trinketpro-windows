@@ -1,14 +1,14 @@
 
 all:
-	cd libarduinocore && $(MAKE)
-	cd libarduinowire && $(MAKE)
-	cd libarduinospi && $(MAKE)
-	cd blink && $(MAKE)
-	cd i2ceeprom && $(MAKE)
+	pushd libarduinocore && $(MAKE) && popd
+	pushd libarduinowire && $(MAKE) && popd
+	pushd libarduinospi && $(MAKE) && popd
+	pushd blink && $(MAKE) && popd
+	pushd i2ceeprom && $(MAKE) && popd
 
 clean:
-	cd libarduinocore && $(MAKE) clean
-	cd libarduinowire && $(MAKE)
-	cd libarduinospi && $(MAKE)
-	cd blink && $(MAKE) clean
-	cd i2ceeprom && $(MAKE) clean
+	pushd libarduinocore && $(MAKE) clean && popd
+	pushd libarduinowire && $(MAKE) clean && popd
+	pushd libarduinospi && $(MAKE) clean && popd
+	pushd blink && $(MAKE) clean && popd
+	pushd i2ceeprom && $(MAKE) clean && popd
