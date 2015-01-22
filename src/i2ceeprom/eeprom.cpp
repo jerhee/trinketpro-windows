@@ -37,7 +37,6 @@ unsigned int address = 0;
 void requestEvent()
 {
     digitalWrite(LED_BUILTIN, HIGH);
-    Serial.println("request");
     // fill buffer
     Wire.write(&storage[address], min(sizeof(storage) - address, BUFFER_LENGTH));
     address = 0;
@@ -49,7 +48,6 @@ void requestEvent()
 void receiveEvent(int count)
 {
     digitalWrite(LED_BUILTIN, HIGH);
-    Serial.println("receive");
     // first two bytes are slave address {HI LO}
     // ignore all other bytes
     int adrHi = Wire.read();
@@ -181,7 +179,7 @@ enum SpiEepromCommand {
 // Attempting to use a higher clock may yield unpredicable results.
 // At 500kHz, incorrect data is returned. The implementation was initially
 // attempted using interrupts but it was too slow. Instead, this function 
-// will poll synchronously for the duration of the frame - as 
+// will poll synchronously for the duration of the frame. A frame is as
 // long as SS (aka PB2, aka IO10) is held LOW.
 //
 static void handleSpiFrame ()
@@ -206,7 +204,7 @@ static void handleSpiFrame ()
         
         switch(header.u.command) {
         case SpiEepromCommandRead:
-            // master is reading
+            // Master is reading (data from slave to master)
             spi_slave_send(&storage[header.u.addr], sizeof(storage) - header.u.addr);
             break;
         case SpiEepromCommandWrite:
