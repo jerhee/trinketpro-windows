@@ -24,56 +24,66 @@
 #include <Wire.h>
 #include <Spi.h>
 
-#define SLAVE_ADDR 0x42
+#define SLAVE_ADDR 0x57
 
 // provide 128 bytes of storage in our virtual eeprom
 byte storage[128];
 
 // current EEPROM address
-unsigned int address = 0;
+size_t address = 0;
+
+class AutoLed
+{
+public:
+    AutoLed ()
+    {
+        digitalWrite(LED_BUILTIN, HIGH);
+    }
+
+    ~AutoLed ()
+    {
+        digitalWrite(LED_BUILTIN, LOW);
+    }
+};
 
 // function that executes whenever data is requested by master
 // this function is registered as an event, see setup()
 void requestEvent()
 {
-    digitalWrite(LED_BUILTIN, HIGH);
+    AutoLed led;
+    
     // fill buffer
     Wire.write(&storage[address], min(sizeof(storage) - address, BUFFER_LENGTH));
     address = 0;
-    digitalWrite(LED_BUILTIN, LOW);
 }
 
 // function that executes whenever data is received from master
 // this function is registered as an event, see setup()
 void receiveEvent(int count)
 {
-    digitalWrite(LED_BUILTIN, HIGH);
-    // first two bytes are slave address {HI LO}
-    // ignore all other bytes
-    int adrHi = Wire.read();
-    int adrLo = Wire.read();
-    if ((adrHi != -1) && (adrLo != -1))
-    {
-        // set current address pointer
-        unsigned int newAddress = ((adrHi & 0xff) << 8) | (adrLo & 0xff);
-        if (newAddress < sizeof(storage))
-        {
-            address = newAddress;
-        }
-    }
+    AutoLed led;
 
-    // write remaining bytes to storage at address
+    // first byte is data address
+    int adr = Wire.read();
+    if ((adr == -1) || (size_t(adr) >= sizeof(storage)))
+        return;
+
+    // set current address pointer
+    address = adr;
+    
+    // write remaining bytes to storage at address with 8-byte wraparound
     int c;
-    unsigned int tempAddr = address;
+    int i = 0;
     while ((c = Wire.read()) != -1)
     {
-        if (tempAddr < sizeof(storage))
+        size_t byteAdr = size_t(address + (i % 8));
+        if (byteAdr < sizeof(storage))
         {
-            storage[tempAddr] = uint8_t(c);
-            ++tempAddr;
+            storage[byteAdr] = uint8_t(c);
         }
+
+        ++i;
     }
-    digitalWrite(LED_BUILTIN, LOW);
 }
 
 //
