@@ -46,6 +46,20 @@ public:
     }
 };
 
+class NoInterrupts
+{
+public:
+    NoInterrupts ()
+    {
+        noInterrupts();
+    }
+
+    ~NoInterrupts ()
+    {
+        interrupts();
+    }
+};
+
 // function that executes whenever data is requested by master
 // this function is registered as an event, see setup()
 void requestEvent()
@@ -129,7 +143,7 @@ size_t spi_slave_send (const uint8_t *buf, size_t count)
                 return p - buf;
             }
         }
-    } while (--count > 0);
+    } while (--count);
     return p - buf;
 }
 
@@ -194,6 +208,8 @@ enum SpiEepromCommand {
 //
 static void handleSpiFrame ()
 {
+    NoInterrupts interruptsOff;
+
     // read command and address bytes
     union {
         uint8_t buf[2];
@@ -210,15 +226,16 @@ static void handleSpiFrame ()
     if (header.u.addr < sizeof(storage)) {
         // Preload SPDR with data at address. This optimization is necessary
         // to prevent us from missing the frame in the read case.
-        SPDR = storage[header.u.addr];
         
         switch(header.u.command) {
         case SpiEepromCommandRead:
             // Master is reading (data from slave to master)
+            SPDR = storage[header.u.addr];
             spi_slave_send(&storage[header.u.addr], sizeof(storage) - header.u.addr);
             break;
         case SpiEepromCommandWrite:
             // Master is writing (data from master to slave)
+            storage[header.u.addr] = SPDR;
             spi_slave_receive(&storage[header.u.addr], sizeof(storage) - header.u.addr);
             break;
         default:
@@ -257,15 +274,15 @@ unsigned long nextPrintMillis;
 void loop()
 {
     // print out the first 16 bytes of the eeprom every 3 seconds
-    if (millis() > nextPrintMillis) {
-        nextPrintMillis = millis() + 3000;
-        Serial.print("EEprom content: ");
-        for (int i = 0; i < 16; ++i) {
-            Serial.print(storage[i]);
-            Serial.print(" ");
-        }
-        Serial.println();
-    }
+    //if (millis() > nextPrintMillis) {
+    //    nextPrintMillis = millis() + 3000;
+    //    Serial.print("EEprom content: ");
+    //    for (int i = 0; i < 16; ++i) {
+    //        Serial.print(storage[i]);
+    //        Serial.print(" ");
+    //    }
+    //    Serial.println();
+    //}
     
     // Look for beginning of SPI frame (PB2 going LOW)
     if (!(PINB & _BV(2))) {
