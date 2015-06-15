@@ -24,10 +24,10 @@
 #include <Wire.h>
 #include <Spi.h>
 
-#define SLAVE_ADDR 0x57
+#define SLAVE_ADDR 0x55
 
-// provide 128 bytes of storage in our virtual eeprom
-byte storage[128];
+// provide 256 bytes of storage in our virtual eeprom
+byte storage[256];
 
 // current EEPROM address
 size_t address = 0;
