@@ -10,11 +10,10 @@ way around since Arduino lets you write malformed C++ code.
 
 ###Build and upload blinky from the command line
 
- 1. Download and install [Arduino 1.5.8 for Windows MSI installer](http://www.arduino.cc/en/Main/Software).
+ 1. Download and install the Arduino 1.6 Windows installer from [http://www.arduino.cc/en/Main/Software](http://www.arduino.cc/en/Main/Software).
     Accept the default install location (C:\Program Files (x86)\Arduino).
     This is important, as the scripts expect this location.
 
-    ![](doc/arduino-download.png)
 
  1. Clone this repository
     
