@@ -468,7 +468,7 @@ void twi_byte_requested ( )
     case REGION_STRETCH_LONG:
         TWDR = addr;
         ++addr;
-        if (addr >= REGION_STRETCH_LONG_END) {
+        if (addr >= (REGION_STRETCH_LONG_END - 2)) {
             addr = REGION_STRETCH_LONG_START;
             blinkDelay(LONG_STRETCH_DURATION_SECONDS);
         }
