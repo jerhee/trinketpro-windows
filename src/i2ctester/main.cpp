@@ -56,6 +56,7 @@ void pulseLed ( )
 //
 void blinkDelay ( unsigned long timeInMs )
 {
+    interrupts();
     unsigned long end = millis() + timeInMs;
     unsigned long nextToggle = 0;
     uint8_t i = 0;
@@ -175,6 +176,9 @@ void twi_releaseBus (void)
   // twi_state = TWI_READY;
 }
 
+static uint8_t portBLEDOn;
+static uint8_t portBLEDOff;
+
 static void twi_state_machine ( )
 {
   switch(TW_STATUS){
@@ -198,14 +202,16 @@ static void twi_state_machine ( )
     case TW_SR_GCALL_ACK: // addressed generally, returned ack
     case TW_SR_ARB_LOST_SLA_ACK:   // lost arbitration, returned ack
     case TW_SR_ARB_LOST_GCALL_ACK: // lost arbitration, returned ack
+        PORTB = portBLEDOn;
         twi_addressed_for_write();
         break;
     case TW_SR_DATA_ACK:       // data received, returned ack
     case TW_SR_GCALL_DATA_ACK: // data received generally, returned ack
-        // if there is still room in the rx buffer
+        PORTB = portBLEDOn;
         twi_byte_received(TWDR);
         break;
     case TW_SR_STOP: // stop or repeated start condition received
+        PORTB = portBLEDOn;
         twi_stop_received();
         twi_releaseBus();
         break;
@@ -220,9 +226,11 @@ static void twi_state_machine ( )
     case TW_ST_SLA_ACK:          // addressed, returned ack
     case TW_ST_ARB_LOST_SLA_ACK: // arbitration lost, returned ack
         twi_byte_requested(true);
+        PORTB = portBLEDOn;
         break;
     case TW_ST_DATA_ACK: // byte sent, ack returned        
         twi_byte_requested(false);
+        PORTB = portBLEDOn;
         break;
     case TW_ST_DATA_NACK: // received nack, we are done 
         twi_ack();
@@ -241,6 +249,7 @@ static void twi_state_machine ( )
     default:
         break;
   }
+  PORTB = portBLEDOff;
 }
 
 ISR(TWI_vect)
@@ -368,6 +377,9 @@ void twi_addressed_for_write ( )
         // are not in those states
         state &= ~(STATE_HOLD_WRITE | STATE_NAK_WRITE);
     }
+    
+    // turn off interrupts while receive is in progress
+    noInterrupts();
 }
 
 void twi_byte_received ( uint8_t data )
@@ -487,7 +499,8 @@ void twi_byte_requested ( bool isStart )
 
 void twi_stop_received ( )
 {
-    // do nothing
+    // reenable interrupts
+    interrupts();
 }
 
 void setup()
@@ -512,6 +525,9 @@ void setup()
     
     twi_init();
     twi_setAddress(SLAVE_ADDR);
+    
+    portBLEDOn = PORTB | _BV(5);
+    portBLEDOff = PORTB;
 }
 
 void loop()
