@@ -298,6 +298,7 @@ static const uint16_t crc16tab[] = {
 
 enum REGISTERS : uint8_t {
     EEPROM_ADDRESS_MAX = 0x7F,
+    REG_DISABLE_REPEATED_STARTS = 0xF8,
     REG_SCL_HOLD_MILLIS_HI = 0xF9,
     REG_SCL_HOLD_MILLIS_LO = 0xFA,
     REG_HOLD_READ_CONTROL = 0xFB,
@@ -514,13 +515,14 @@ void setup()
     }
     
     // load default register values
-    storage[REG_SCL_HOLD_MILLIS_HI] = 0x3A,
-    storage[REG_SCL_HOLD_MILLIS_LO] = 0x98,
-    storage[REG_HOLD_READ_CONTROL] = 0xFF,
-    storage[REG_HOLD_WRITE_CONTROL] = 0xFF,
-    storage[REG_NAK_CONTROL] = 0xFF,
-    storage[REG_CHECKSUM_UPDATE] = 0,
-    storage[REG_CHECKSUM_RESET] = 0,
+    storage[REG_DISABLE_REPEATED_STARTS] = 0;
+    storage[REG_SCL_HOLD_MILLIS_HI] = 0x3A;
+    storage[REG_SCL_HOLD_MILLIS_LO] = 0x98;
+    storage[REG_HOLD_READ_CONTROL] = 0xFF;
+    storage[REG_HOLD_WRITE_CONTROL] = 0xFF;
+    storage[REG_NAK_CONTROL] = 0xFF;
+    storage[REG_CHECKSUM_UPDATE] = 0;
+    storage[REG_CHECKSUM_RESET] = 0;
     
     twi_init();
     twi_setAddress(SLAVE_ADDR);
