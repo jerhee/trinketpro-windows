@@ -258,7 +258,7 @@ ISR(TWI_vect)
 }
 
 // CRC16 table for CCITT polynomial (0x1021)
-static const unsigned short crc16tab[] = {
+static const uint16_t crc16tab[] = {
 	0x0000,0x1021,0x2042,0x3063,0x4084,0x50a5,0x60c6,0x70e7,
 	0x8108,0x9129,0xa14a,0xb16b,0xc18c,0xd1ad,0xe1ce,0xf1ef,
 	0x1231,0x0210,0x3273,0x2252,0x52b5,0x4294,0x72f7,0x62d6,
@@ -326,7 +326,7 @@ static uint8_t storage[256];
 static uint32_t crc;    
 void update_checksum ( uint8_t data )
 {
-    crc = (crc << 8) ^ crc16tab[uint8_t((crc >> 8) ^ data)];
+    crc = uint32_t(crc << 8) ^ uint32_t(crc16tab[uint8_t((crc >> 8) ^ data)]);
     
     // update current register values
     storage[REG_CHECKSUM_UPDATE] = uint8_t(crc >> 8);
@@ -446,6 +446,8 @@ void twi_byte_received ( uint8_t data )
             break;
         case REG_CHECKSUM_RESET:
             crc = 0;
+            storage[REG_CHECKSUM_UPDATE] = 0;
+            storage[REG_CHECKSUM_RESET] = 0;
             break;
         default:
             // writes to reserved registers are ignored
@@ -456,33 +458,21 @@ void twi_byte_received ( uint8_t data )
 
 void twi_byte_requested ( bool isStart )
 {
-    if (isStart) {
-        // check if hold read is armed
-        if (storage[REG_HOLD_READ_CONTROL] != 0xff) {
-            if (storage[REG_HOLD_READ_CONTROL] == 0) {
-                countdown = 0;
-                delay_current_hold_millis();
-            } else {
-                // enter the hold read state
-                countdown = storage[REG_HOLD_READ_CONTROL];
-                state |= STATE_HOLD_READ;
-            }
-            
-            TWDR = countdown;
-            twi_ack();
-            
-            // ensure that hold read is a one-shot operation
-            storage[REG_HOLD_READ_CONTROL] = 0xff;
+    if (isStart && (storage[REG_HOLD_READ_CONTROL] != 0xff)) {
+        if (storage[REG_HOLD_READ_CONTROL] == 0) {
+            countdown = 0;
+            delay_current_hold_millis();
         } else {
-            // all other reads give back current register contents
-            TWDR = storage[address];
-            twi_ack();
-            
-            // addresses within the eeprom increment and wrap
-            if (address <= EEPROM_ADDRESS_MAX) {
-                address = (address + 1) % (EEPROM_ADDRESS_MAX + 1);
-            }
+            // enter the hold read state
+            countdown = storage[REG_HOLD_READ_CONTROL];
+            state |= STATE_HOLD_READ;
         }
+        
+        TWDR = countdown;
+        twi_ack();
+        
+        // ensure that hold read is a one-shot operation
+        storage[REG_HOLD_READ_CONTROL] = 0xff;    
     } else if (state & STATE_HOLD_READ) {
         // hold read state counts down until it's time to hold
         if (--countdown == 0) {
@@ -499,6 +489,9 @@ void twi_byte_requested ( bool isStart )
         if (address <= EEPROM_ADDRESS_MAX) {
             // addresses within the eeprom increment and wrap
             address = (address + 1) % (EEPROM_ADDRESS_MAX + 1);
+        } else {
+            // address increments and wraps
+            ++address;
         }
     }
 }
