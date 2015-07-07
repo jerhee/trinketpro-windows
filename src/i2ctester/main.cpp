@@ -153,9 +153,8 @@ void twi_stop ( )
 
   // wait for stop condition to be exectued on bus
   // TWINT is not set after a stop condition!
-  while(TWCR & _BV(TWSTO)){
-    continue;
-  }
+  for (uint16_t x = 0; --x && (TWCR & _BV(TWSTO));)
+        for (volatile uint8_t y = 32; --y;);
 
   // update twi state
   // twi_state = TWI_READY;
@@ -293,9 +292,6 @@ static const uint16_t crc16tab[] = {
 	0x6e17,0x7e36,0x4e55,0x5e74,0x2e93,0x3eb2,0x0ed1,0x1ef0
 };
 
-
-
-
 enum REGISTERS : uint8_t {
     EEPROM_ADDRESS_MAX = 0x7F,
     REG_DISABLE_REPEATED_STARTS = 0xF8,
@@ -314,9 +310,10 @@ enum : uint16_t {
 
 enum STATE : uint8_t {
     STATE_NORMAL = 0,
-    STATE_NAK_WRITE = 0x1,    // NAK_WRITE and HOLD_WRITE are mutually exclusive
+    STATE_NAK_WRITE = 0x1,    // NAK_WRITE, HOLD_WRITE and NO_RS are mutually exclusive
     STATE_HOLD_WRITE = 0x2,
-    STATE_HOLD_READ = 0x4,      // HOLD_READ can be superimposed with NAK_WRITE or HOLD_WRITE
+    STATE_NO_RS = 0x4,
+    STATE_HOLD_READ = 0x8,      // HOLD_READ can be superimposed with NAK_WRITE or HOLD_WRITE
 };
 
 static uint8_t state = STATE_NORMAL;
@@ -377,12 +374,20 @@ void twi_addressed_for_write ( )
         
         // Hold write is always one-shot. This resets hold write.
         storage[REG_HOLD_WRITE_CONTROL] = 0xff;
+    } else if (storage[REG_DISABLE_REPEATED_STARTS] != 0) {
+        twi_ack();
+        
+        // if disable repeated starts is armed, set the NO_RS flag
+        state |= STATE_NO_RS;
+        
+        // disabling repeated start is always a one-shot operation
+        storage[REG_DISABLE_REPEATED_STARTS] = 0;
     } else {
         twi_ack();
         
         // if write NAK or HOLD_WRITE are not armed, ensure we
         // are not in those states
-        state &= ~(STATE_HOLD_WRITE | STATE_NAK_WRITE);
+        state &= ~(STATE_HOLD_WRITE | STATE_NAK_WRITE | STATE_NO_RS);
     }
     
     // turn off interrupts while receive is in progress
@@ -436,6 +441,7 @@ void twi_byte_received ( uint8_t data )
             storage[address] = data;
             ++address;
             break;
+        case REG_DISABLE_REPEATED_STARTS:
         case REG_SCL_HOLD_MILLIS_LO:
         case REG_HOLD_READ_CONTROL:
         case REG_HOLD_WRITE_CONTROL:
@@ -499,6 +505,14 @@ void twi_byte_requested ( bool isStart )
 
 void twi_stop_received ( )
 {
+    // check if we should fail repeated starts
+    if (state & STATE_NO_RS) {
+        twi_stop();
+        
+        // disabling repeated starts is always a one-shot operation
+        state &= ~STATE_NO_RS;
+    }
+    
     // reenable interrupts
     interrupts();
 }
