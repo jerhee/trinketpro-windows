@@ -5,34 +5,6 @@
 
 #define SLAVE_ADDR 0x55
 
-class AutoLed
-{
-public:
-    AutoLed ()
-    {
-        digitalWrite(LED_BUILTIN, HIGH);
-    }
-
-    ~AutoLed ()
-    {
-        digitalWrite(LED_BUILTIN, LOW);
-    }
-};
-
-class NoInterrupts
-{
-public:
-    NoInterrupts ()
-    {
-        noInterrupts();
-    }
-
-    ~NoInterrupts ()
-    {
-        interrupts();
-    }
-};
-
 void fatalError ( )
 {
     for (;;) {
@@ -41,13 +13,6 @@ void fatalError ( )
         digitalWrite(LED_BUILTIN, LOW);
         delay(100);
     }
-}
-
-void pulseLed ( )
-{
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(100);
-    digitalWrite(LED_BUILTIN, LOW);
 }
 
 //
@@ -81,8 +46,6 @@ void blinkDelay ( unsigned long timeInMs )
 #endif
 
 #define TWI_FREQ 100000L
-
-static volatile uint8_t twi_error;
 
 static void twi_addressed_for_write ( );
 static void twi_byte_received ( uint8_t data );
@@ -154,7 +117,7 @@ void twi_stop ( )
   // wait for stop condition to be exectued on bus
   // TWINT is not set after a stop condition!
   for (uint16_t x = 0; --x && (TWCR & _BV(TWSTO));)
-        for (volatile uint8_t y = 32; --y;);
+        for (volatile uint8_t y = 0x80; --y;);
 
   // update twi state
   // twi_state = TWI_READY;
@@ -239,7 +202,6 @@ static void twi_state_machine ( )
         twi_ack();
         break;
     case TW_BUS_ERROR: // bus error, illegal stop/start
-        twi_error = TW_BUS_ERROR;
         twi_stop();
         break;
     
