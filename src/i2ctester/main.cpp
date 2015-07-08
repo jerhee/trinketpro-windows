@@ -25,7 +25,7 @@ void blinkDelay ( unsigned long timeInMs )
     unsigned long end = millis() + timeInMs;
     unsigned long nextToggle = 0;
     uint8_t i = 0;
-    
+
     unsigned long now;
     while ((now = millis()) < end) {
         if (now >= nextToggle) {
@@ -33,7 +33,7 @@ void blinkDelay ( unsigned long timeInMs )
             nextToggle += 500;
         }
     }
-    
+
     digitalWrite(LED_BUILTIN, LOW);
 }
 
@@ -52,7 +52,7 @@ static void twi_byte_received ( uint8_t data );
 static void twi_byte_requested ( bool isStart );
 static void twi_stop_received ( );
 
-/* 
+/*
  * Function twi_init
  * Desc     readys twi pins and sets twi bitrate
  * Input    none
@@ -62,7 +62,7 @@ void twi_init (void)
 {
   // initialize state
   // twi_state = TWI_READY;
-  
+
   // activate internal pullups for twi.
   digitalWrite(SDA, 1);
   digitalWrite(SCL, 1);
@@ -81,7 +81,7 @@ void twi_init (void)
   TWCR = _BV(TWEN) /*| _BV(TWIE)*/ | _BV(TWEA);
 }
 
-/* 
+/*
  * Function twi_slaveInit
  * Desc     sets slave address and enables interrupt
  * Input    none
@@ -123,7 +123,7 @@ void twi_stop ( )
   // twi_state = TWI_READY;
 }
 
-/* 
+/*
  * Function twi_releaseBus
  * Desc     releases bus control
  * Input    none
@@ -190,11 +190,11 @@ static void twi_state_machine ( )
         twi_byte_requested(true);
         PORTB = portBLEDOn;
         break;
-    case TW_ST_DATA_ACK: // byte sent, ack returned        
+    case TW_ST_DATA_ACK: // byte sent, ack returned
         twi_byte_requested(false);
         PORTB = portBLEDOn;
         break;
-    case TW_ST_DATA_NACK: // received nack, we are done 
+    case TW_ST_DATA_NACK: // received nack, we are done
         twi_ack();
         break;
     case TW_ST_LAST_DATA: // received ack, but we are done already!
@@ -204,7 +204,7 @@ static void twi_state_machine ( )
     case TW_BUS_ERROR: // bus error, illegal stop/start
         twi_stop();
         break;
-    
+
     // All
     case TW_NO_INFO:   // no state information
     default:
@@ -283,11 +283,11 @@ static uint8_t state = STATE_NORMAL;
 // provide 256 bytes of storage in our virtual eeprom
 static uint8_t storage[256];
 
-static uint32_t crc;    
+static uint32_t crc;
 void update_checksum ( uint8_t data )
 {
     crc = uint32_t(crc << 8) ^ uint32_t(crc16tab[uint8_t((crc >> 8) ^ data)]);
-    
+
     // update current register values
     storage[REG_CHECKSUM_UPDATE] = uint8_t(crc >> 8);
     storage[REG_CHECKSUM_RESET] = uint8_t(crc);
@@ -295,7 +295,7 @@ void update_checksum ( uint8_t data )
 
 void delay_current_hold_millis ( )
 {
-    unsigned long timeInMillis = 
+    unsigned long timeInMillis =
         (storage[REG_SCL_HOLD_MILLIS_HI] << 8) |
         storage[REG_SCL_HOLD_MILLIS_LO];
     blinkDelay(timeInMillis);
@@ -310,7 +310,7 @@ static bool isFirstByte;
 void twi_addressed_for_write ( )
 {
     isFirstByte = true;
-    
+
     // if NAK is armed, check if NAK length is 0, or set up
     // NAK state
     if (storage[REG_NAK_CONTROL] != 0xff) {
@@ -331,27 +331,27 @@ void twi_addressed_for_write ( )
             countdown = storage[REG_HOLD_WRITE_CONTROL];
             state |= STATE_HOLD_WRITE;
         }
-        
+
         twi_ack();
-        
+
         // Hold write is always one-shot. This resets hold write.
         storage[REG_HOLD_WRITE_CONTROL] = 0xff;
     } else if (storage[REG_DISABLE_REPEATED_STARTS] != 0) {
         twi_ack();
-        
+
         // if disable repeated starts is armed, set the NO_RS flag
         state |= STATE_NO_RS;
-        
+
         // disabling repeated start is always a one-shot operation
         storage[REG_DISABLE_REPEATED_STARTS] = 0;
     } else {
         twi_ack();
-        
+
         // if write NAK or HOLD_WRITE are not armed, ensure we
         // are not in those states
         state &= ~(STATE_HOLD_WRITE | STATE_NAK_WRITE | STATE_NO_RS);
     }
-    
+
     // turn off interrupts while receive is in progress
     noInterrupts();
 }
@@ -374,26 +374,26 @@ void twi_byte_received ( uint8_t data )
             delay_current_hold_millis();
             state &= ~STATE_HOLD_WRITE;
         }
-        
+
         // data received in HOLD_WRITE mode is ignored
-        
+
         twi_ack();
     } else {
         twi_ack();
-        
+
         if (isFirstByte) {
             address = data;
             isFirstByte = false;
             return;
         }
-        
+
         // if we're in eeprom range, increment and wrap address
         if (address <= EEPROM_ADDRESS_MAX) {
             storage[address] = data;
             address = (address + 1) % (EEPROM_ADDRESS_MAX + 1);
             return;
         }
-        
+
         // update register with data. address does not auto increment
         // for register writes
         switch (address) {
@@ -436,25 +436,25 @@ void twi_byte_requested ( bool isStart )
             countdown = storage[REG_HOLD_READ_CONTROL];
             state |= STATE_HOLD_READ;
         }
-        
+
         TWDR = countdown;
         twi_ack();
-        
+
         // ensure that hold read is a one-shot operation
-        storage[REG_HOLD_READ_CONTROL] = 0xff;    
+        storage[REG_HOLD_READ_CONTROL] = 0xff;
     } else if (state & STATE_HOLD_READ) {
         // hold read state counts down until it's time to hold
         if (--countdown == 0) {
             delay_current_hold_millis();
         }
-        
+
         TWDR = countdown;
         twi_ack();
     } else {
         // all other states return current register value
         TWDR = storage[address];
         twi_ack();
-        
+
         if (address <= EEPROM_ADDRESS_MAX) {
             // addresses within the eeprom increment and wrap
             address = (address + 1) % (EEPROM_ADDRESS_MAX + 1);
@@ -470,11 +470,11 @@ void twi_stop_received ( )
     // check if we should fail repeated starts
     if (state & STATE_NO_RS) {
         twi_stop();
-        
+
         // disabling repeated starts is always a one-shot operation
         state &= ~STATE_NO_RS;
     }
-    
+
     // reenable interrupts
     interrupts();
 }
@@ -484,12 +484,12 @@ void setup()
     // set LED pin as output
     pinMode(LED_BUILTIN, OUTPUT);
     // Serial.begin(115200);
-    
+
     // fill storage
     for (unsigned i = 0; i < sizeof(storage); ++i) {
         storage[i] = 0x55;
     }
-    
+
     // load default register values
     storage[REG_DISABLE_REPEATED_STARTS] = 0;
     storage[REG_SCL_HOLD_MILLIS_HI] = 0x3A;
@@ -499,10 +499,10 @@ void setup()
     storage[REG_NAK_CONTROL] = 0xFF;
     storage[REG_CHECKSUM_UPDATE] = 0;
     storage[REG_CHECKSUM_RESET] = 0;
-    
+
     twi_init();
     twi_setAddress(SLAVE_ADDR);
-    
+
     portBLEDOn = PORTB | _BV(5);
     portBLEDOff = PORTB;
 }
