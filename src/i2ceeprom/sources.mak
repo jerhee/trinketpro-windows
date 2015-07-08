@@ -3,8 +3,8 @@ TARGETTYPE=program
 
 OPT=-O2
 
-CSRC=twi.c
-CPPSRC=eeprom.cpp Wire.cpp
+CPPSRC=eeprom.cpp
 
 LIBS= \
     ../libarduinocore/libarduinocore.a \
+    ../libarduinowire/libarduinowire.a \
